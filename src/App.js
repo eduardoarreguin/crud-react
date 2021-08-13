@@ -1,64 +1,21 @@
-import React, { useState } from 'react'; 
+import React from 'react'; 
 
-import { isEmpty, size } from 'lodash';
-import shortid from 'shortid';
+import { size } from 'lodash';
+import { useTasks } from './hooks/useTask';
 
-const App = () => {
+const App = () => {    
 
-    const [ task, setTask ]   = useState('');    
-    const [ tasks, setTasks ] = useState([]);   
-    const [ edit, setEdit ]   = useState( false );
-    const [ id, setId ]       = useState('');    
-    const [ error, setError ] = useState( null )
-
-    const validForm = () => {
-        let isValid = true;
-        setError( null );
-        if( isEmpty( task )){
-            setError('Debes Ingresar una tarea')
-            isValid = false;
-        }
-
-        return isValid;
-    }
-    const addTask = (e) => {
-        e.preventDefault();
-        if( !validForm() ) return
-
-        const newTask = {
-            id: shortid.generate(),
-            name: task
-        }
-        setTasks([
-            ...tasks,
-            newTask
-        ])
-        setTask( '' )
-    }
-
-    const saveTask = (e) => {
-        e.preventDefault();
-        if( !validForm() ) return
-
-        const editedTasks = tasks.map(item => item.id === id ? { id, name: task } : item )
-        setTasks( editedTasks )
-        setEdit( false )
-        setTask('')
-        setId('')
-    }
-
-    const deleteTask = ( id ) => {
-        const filteredTask = tasks.filter( task  => task.id !== id );
-        setTasks([ ...filteredTask ])
-    }
-
-    const editTask = ( theTask ) => {
-        setTask( theTask.name )
-        setEdit( true )
-        setId( theTask.id )
-    }
-
-    
+    const { 
+        deleteTask, 
+        addTask, 
+        saveTask, 
+        editTask, 
+        setTask,
+        tasks,
+        task,
+        edit,
+        error,
+    } = useTasks()    
     
     return (
         <div
@@ -110,7 +67,7 @@ const App = () => {
                         { edit? 'Modificar' : 'Agregar' } Tarea
                     </h4>
                     <form onSubmit={ edit? saveTask : addTask } >
-                        
+
                         { error&& <span className="text-danger" >{ error }</span> }
                         <input 
                             type='text'
