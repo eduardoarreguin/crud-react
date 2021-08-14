@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { isEmpty } from 'lodash';
-import shortid from 'shortid';
+import { addDocument, getCollection, updateDocument, deleteDocument } from '../firebase/actions';
 
 export const useTasks = () => {
 
@@ -9,6 +9,15 @@ export const useTasks = () => {
     const [ edit, setEdit ]   = useState( false );
     const [ id, setId ]       = useState('');    
     const [ error, setError ] = useState( null )    
+
+    useEffect(() =>{
+        ( async() => {
+            const result = await getCollection('tasks');
+            if( result.statusResponse ){
+                setTasks(result.data) 
+            }           
+        })()
+    }, []);  
 
     const validForm = () => {
         let isValid = true;
@@ -20,24 +29,33 @@ export const useTasks = () => {
 
         return isValid;
     }
-    const addTask = (e) => {
+    const addTask = async(e) => {
         e.preventDefault();
         if( !validForm() ) return
 
-        const newTask = {
-            id: shortid.generate(),
-            name: task
+        const result = await addDocument('tasks', { name: task })
+        
+        if( !result.statusResponse ){
+            setError( result.error )
+            return
         }
         setTasks([
             ...tasks,
-            newTask
+            { id: result.data.id, name: task }
         ])
         setTask( '' )
     }
 
-    const saveTask = (e) => {
+    const saveTask = async(e) => {
         e.preventDefault();
         if( !validForm() ) return
+        
+        const result =  await updateDocument( 'tasks', id, { name: task } )
+        if( !result.statusResponse ){
+            setError( result.error )
+            return
+        }
+
 
         const editedTasks = tasks.map(item => item.id === id ? { id, name: task } : item )
         setTasks( editedTasks )
@@ -54,7 +72,14 @@ export const useTasks = () => {
         setId( theTask.id )
     }
 
-    const deleteTask = ( id ) => {
+    const deleteTask = async( id ) => {
+
+        const result = await deleteDocument('tasks', id );
+        if( !result.statusResponse ){
+            setError( result.error )
+            return
+        }
+        
         const filteredTask = tasks.filter( task  => task.id !== id );
         setTasks([ ...filteredTask ])
     }
